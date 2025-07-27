@@ -1,0 +1,2 @@
+# EasyKasir
+Project Kasir
