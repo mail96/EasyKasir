@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'register_page.dart'; // Import halaman register
+import 'login_page.dart'; // Import halaman login
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatelessWidget {
+  const RegisterPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +13,7 @@ class LoginPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             children: [
-              // Card untuk logo KasirKu
+              // Card untuk logo KasirKu (konsisten dengan login)
               Card(
                 color: Colors.white10,
                 shape: RoundedRectangleBorder(
@@ -33,7 +33,7 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
 
-              // Card untuk form login
+              // Card untuk form register
               Card(
                 color: Colors.white10,
                 shape: RoundedRectangleBorder(
@@ -41,13 +41,13 @@ class LoginPage extends StatelessWidget {
                 ),
                 elevation: 4,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 500),
+                  constraints: const BoxConstraints(minHeight: 600),
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
                         const Text(
-                          'Selamat Datang',
+                          'Buat Akun',
                           style: TextStyle(
                             fontSize: 22,
                             color: Colors.white,
@@ -55,11 +55,13 @@ class LoginPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Bergabunglah dengan kami untuk pengalaman manajemen Kasir yang lebih baik.',
+                          "Mudahkan manajemen bisnismu dengan Kasirku.",
                           style: TextStyle(color: Colors.white54),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
+                        _buildTextField(label: 'Nama Lengkap'),
+                        const SizedBox(height: 14),
                         _buildTextField(label: 'Email'),
                         const SizedBox(height: 14),
                         _buildTextField(
@@ -67,22 +69,18 @@ class LoginPage extends StatelessWidget {
                           isPassword: true,
                         ),
                         const SizedBox(height: 14),
-                        const Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: null,
-                            child: Text(
-                              'Lupa Password?',
-                              style: TextStyle(color: Colors.white54),
-                            ),
-                          ),
+                        _buildTextField(
+                          label: 'Konfirmasi Password',
+                          isPassword: true,
                         ),
                         const SizedBox(height: 20),
                         SizedBox(
                           width: 180,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Logic login
+                              // Logic register
+                              // Setelah register berhasil, navigasi kembali ke login
+                              Navigator.pop(context);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.purple,
@@ -95,7 +93,7 @@ class LoginPage extends StatelessWidget {
                               elevation: 3,
                             ),
                             child: const Text(
-                              'Masuk',
+                              'Daftar',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
@@ -106,16 +104,11 @@ class LoginPage extends StatelessWidget {
                         const SizedBox(height: 16),
                         TextButton(
                           onPressed: () {
-                            // Navigasi ke halaman register
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
-                              ),
-                            );
+                            // Kembali ke halaman login
+                            Navigator.pop(context);
                           },
                           child: const Text(
-                            'Belum punya akun? Daftar',
+                            'Sudah punya akun? Masuk',
                             style: TextStyle(color: Colors.white54),
                           ),
                         ),
