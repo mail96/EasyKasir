@@ -82,7 +82,7 @@ class LoginPage extends StatelessWidget {
                           width: 180,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Logic login
+                              // Logika nye login
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.purple,

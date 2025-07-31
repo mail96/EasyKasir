@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart'; // Import halaman login
+import 'login_page.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -13,7 +13,7 @@ class RegisterPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             children: [
-              // Card untuk logo KasirKu (konsisten dengan login)
+              // Card untuk logo KasirKu
               Card(
                 color: Colors.white10,
                 shape: RoundedRectangleBorder(
