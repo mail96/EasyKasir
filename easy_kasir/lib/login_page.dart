@@ -10,7 +10,7 @@ class LoginPage extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Column(
             children: [
               // Card untuk logo KasirKu
@@ -43,7 +43,7 @@ class LoginPage extends StatelessWidget {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: 500),
                   child: Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(10),
                     child: Column(
                       children: [
                         const Text(
