@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
+
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -78,8 +78,8 @@ class RegisterPage extends StatelessWidget {
                           width: 180,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Logic register
-                              // Setelah register berhasil, navigasi kembali ke login
+                              // Logika nye register
+                              // Setelah register berhasil, navigasi ke login
                               Navigator.pop(context);
                             },
                             style: ElevatedButton.styleFrom(
