@@ -1,88 +1,26 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
-void main() {
-  runApp(MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Mesin Kasir',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MainScreen(),
-    );
-  }
-}
-
-class MainScreen extends StatefulWidget {
-  @override
-  _MainScreenState createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-  final List<Product> _products = [
-    Product(name: "Produk 1", price: 10000, image: "", quantity: 1),
-    Product(name: "Produk 2", price: 15000, image: "", quantity: 2),
-    Product(name: "Produk 3", price: 20000, image: "", quantity: 1),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_currentIndex == 0 ? 'DAFTAR PRODUK' : 'TAMBAH PRODUK BARU'),
-      ),
-      body: _currentIndex == 0 
-          ? ProductListScreen(products: _products)
-          : AddProductScreen(
-              onProductAdded: (newProduct) {
-                setState(() {
-                  _products.add(newProduct);
-                });
-              },
-            ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Daftar Produk',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Tambah Produk',
-          ),
-        ],
-      ),
-      floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton(
-              onPressed: () {
-                // Aksi untuk menambah produk dari halaman daftar
-                setState(() {
-                  _currentIndex = 1;
-                });
-              },
-              child: Icon(Icons.add),
-              tooltip: 'Tambah Produk',
-            )
-          : null,
+      title: 'Manajemen Produk',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: ProductPage(),
     );
   }
 }
 
 class Product {
-  final String name;
-  final double price;
-  final String image;
+  String name;
+  double price;
+  File? image;
   int quantity;
 
   Product({
@@ -93,205 +31,309 @@ class Product {
   });
 }
 
-class ProductListScreen extends StatelessWidget {
-  final List<Product> products;
+class ProductPage extends StatefulWidget {
+  @override
+  _ProductPageState createState() => _ProductPageState();
+}
 
-  const ProductListScreen({required this.products});
+class _ProductPageState extends State<ProductPage> {
+  List<Product> products = [];
+
+  void _navigateToAddPage() async {
+    final newProduct = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AddEditProductPage()),
+    );
+
+    if (newProduct != null) {
+      setState(() {
+        products.add(newProduct);
+      });
+    }
+  }
+
+  void _navigateToEditPage(int index) async {
+    final editedProduct = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            AddEditProductPage(product: products[index], isEditing: true),
+      ),
+    );
+
+    if (editedProduct != null) {
+      setState(() {
+        products[index] = editedProduct;
+      });
+    }
+  }
+
+  void _deleteProduct(int index) {
+    setState(() {
+      products.removeAt(index);
+    });
+  }
+
+  String formatRupiah(double amount) {
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(amount);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Cari Produk...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('DAFTAR PRODUK'),
+        centerTitle: true,
+        leading: IconButton(icon: Icon(Icons.arrow_back), onPressed: () {}),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Cari Produk ...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
+              ),
             ),
           ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return Card(
-                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  leading: product.image.isEmpty
-                      ? CircleAvatar(
-                          child: Icon(Icons.shopping_bag),
-                        )
-                      : CircleAvatar(
-                          backgroundImage: NetworkImage(product.image),
-                        ),
-                  title: Text(product.name),
-                  subtitle: Text('Rp ${product.price.toStringAsFixed(0)}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              itemCount: products.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Changed from 3 to 2 to prevent overflow
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 0.8, // Adjusted aspect ratio
+              ),
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      IconButton(
-                        icon: Icon(Icons.remove),
-                        onPressed: () {
-                          // Kurangi jumlah
-                        },
+                      Expanded(
+                        child: product.image == null
+                            ? Center(child: Icon(Icons.image, size: 60))
+                            : ClipRRect(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(8),
+                                ),
+                                child: Image.file(
+                                  product.image!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
+                              ),
                       ),
-                      Text('${product.quantity}'),
-                      IconButton(
-                        icon: Icon(Icons.add),
-                        onPressed: () {
-                          // Tambah jumlah
-                        },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              product.name,
+                              style: TextStyle(fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              formatRupiah(product.price),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit, size: 18),
+                              onPressed: () => _navigateToEditPage(index),
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(),
+                            ),
+                            Text(
+                              '<${product.quantity}>',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete, size: 18),
+                              onPressed: () => _deleteProduct(index),
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToAddPage,
+        icon: Icon(Icons.add),
+        label: Text("Tambah"),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
 
-class AddProductScreen extends StatefulWidget {
-  final Function(Product) onProductAdded;
+class AddEditProductPage extends StatefulWidget {
+  final Product? product;
+  final bool isEditing;
 
-  const AddProductScreen({required this.onProductAdded});
+  AddEditProductPage({this.product, this.isEditing = false});
 
   @override
-  _AddProductScreenState createState() => _AddProductScreenState();
+  _AddEditProductPageState createState() => _AddEditProductPageState();
 }
 
-class _AddProductScreenState extends State<AddProductScreen> {
+class _AddEditProductPageState extends State<AddEditProductPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _quantityController = TextEditingController(text: '1');
-  String _imageUrl = '';
+  late TextEditingController _nameController;
+  late TextEditingController _priceController;
+  late int _quantity;
+  File? _selectedImage;
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    _priceController.dispose();
-    _quantityController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(
+      text: widget.isEditing ? widget.product?.name : '',
+    );
+    _priceController = TextEditingController(
+      text: widget.isEditing ? widget.product?.price.toString() : '',
+    );
+    _quantity = widget.isEditing ? widget.product?.quantity ?? 1 : 1;
+    _selectedImage = widget.isEditing ? widget.product?.image : null;
   }
 
-  void _submitForm() {
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+
+    if (picked != null) {
+      setState(() {
+        _selectedImage = File(picked.path);
+      });
+    }
+  }
+
+  void _saveProduct() {
     if (_formKey.currentState!.validate()) {
-      final newProduct = Product(
+      final product = Product(
         name: _nameController.text,
         price: double.parse(_priceController.text),
-        image: _imageUrl,
-        quantity: int.parse(_quantityController.text),
+        image: _selectedImage,
+        quantity: _quantity,
       );
-
-      widget.onProductAdded(newProduct);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Produk berhasil ditambahkan')),
-      );
-
-      // Reset form
-      _formKey.currentState!.reset();
-      _quantityController.text = '1';
-      _imageUrl = '';
+      Navigator.pop(context, product);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        child: ListView(
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Nama Produk',
-                border: OutlineInputBorder(),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.isEditing ? 'EDIT PRODUK' : 'TAMBAH PRODUK BARU'),
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(labelText: 'Nama Produk'),
+                validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Nama produk harus diisi';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              controller: _priceController,
-              decoration: InputDecoration(
-                labelText: 'Harga Produk',
-                prefixText: 'Rp ',
-                border: OutlineInputBorder(),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _priceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: 'Harga Produk'),
+                validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
               ),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Harga produk harus diisi';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Masukkan angka yang valid';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              controller: _quantityController,
-              decoration: InputDecoration(
-                labelText: 'Jumlah Produk',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Jumlah produk harus diisi';
-                }
-                if (int.tryParse(value) == null) {
-                  return 'Masukkan angka yang valid';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 16),
-            GestureDetector(
-              onTap: () {
-                // Aksi untuk menambahkan gambar
-              },
-              child: Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
+              SizedBox(height: 16),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 140,
+                  decoration: BoxDecoration(
+                    border: Border.all(),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: _selectedImage == null
+                      ? Center(child: Icon(Icons.image, size: 40))
+                      : Image.file(_selectedImage!, fit: BoxFit.cover),
                 ),
-                child: _imageUrl.isEmpty
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.camera_alt, size: 50),
-                          Text('Tambahkan Gambar Produk'),
-                        ],
-                      )
-                    : Image.network(_imageUrl, fit: BoxFit.cover),
               ),
-            ),
-            SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _submitForm,
-              child: Text('SIMPAN', style: TextStyle(fontSize: 18)),
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Jumlah Produk:'),
+                  IconButton(
+                    icon: Icon(Icons.remove),
+                    onPressed: () => setState(() {
+                      if (_quantity > 1) _quantity--;
+                    }),
+                  ),
+                  Text(_quantity.toString()),
+                  IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: () => setState(() {
+                      _quantity++;
+                    }),
+                  ),
+                ],
               ),
-            ),
-          ],
+              SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _saveProduct,
+                child: Text('Simpan'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
