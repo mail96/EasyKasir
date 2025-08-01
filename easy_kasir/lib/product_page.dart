@@ -2,20 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Manajemen Produk',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: ProductPage(),
-    );
-  }
-}
+import 'widgets/custom_appbar.dart';
+import 'widgets/custom_drawer.dart';
 
 class Product {
   String name;
@@ -37,6 +25,7 @@ class ProductPage extends StatefulWidget {
 }
 
 class _ProductPageState extends State<ProductPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Product> products = [];
 
   void _navigateToAddPage() async {
@@ -85,11 +74,17 @@ class _ProductPageState extends State<ProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('DAFTAR PRODUK'),
-        centerTitle: true,
-        leading: IconButton(icon: Icon(Icons.arrow_back), onPressed: () {}),
+      key: _scaffoldKey,
+      appBar: CustomAppBar(
+        onDrawerPressed: () {
+          _scaffoldKey.currentState?.openDrawer();
+        },
+        onCartPressed: () {
+          // Aksi untuk keranjang di halaman ini (jika ada)
+        },
+        title: 'Daftar Produk',
       ),
+      drawer: const CustomDrawer(),
       body: Column(
         children: [
           Padding(
@@ -109,11 +104,11 @@ class _ProductPageState extends State<ProductPage> {
             child: GridView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               itemCount: products.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // Changed from 3 to 2 to prevent overflow
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
-                childAspectRatio: 0.8, // Adjusted aspect ratio
+                childAspectRatio: 0.8,
               ),
               itemBuilder: (context, index) {
                 final product = products[index];
@@ -127,9 +122,9 @@ class _ProductPageState extends State<ProductPage> {
                     children: [
                       Expanded(
                         child: product.image == null
-                            ? Center(child: Icon(Icons.image, size: 60))
+                            ? const Center(child: Icon(Icons.image, size: 60))
                             : ClipRRect(
-                                borderRadius: BorderRadius.vertical(
+                                borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(8),
                                 ),
                                 child: Image.file(
@@ -149,13 +144,13 @@ class _ProductPageState extends State<ProductPage> {
                           children: [
                             Text(
                               product.name,
-                              style: TextStyle(fontSize: 12),
+                              style: const TextStyle(fontSize: 12),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               formatRupiah(product.price),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.black54,
                               ),
@@ -169,20 +164,20 @@ class _ProductPageState extends State<ProductPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             IconButton(
-                              icon: Icon(Icons.edit, size: 18),
+                              icon: const Icon(Icons.edit, size: 18),
                               onPressed: () => _navigateToEditPage(index),
                               padding: EdgeInsets.zero,
-                              constraints: BoxConstraints(),
+                              constraints: const BoxConstraints(),
                             ),
                             Text(
                               '<${product.quantity}>',
-                              style: TextStyle(fontSize: 12),
+                              style: const TextStyle(fontSize: 12),
                             ),
                             IconButton(
-                              icon: Icon(Icons.delete, size: 18),
+                              icon: const Icon(Icons.delete, size: 18),
                               onPressed: () => _deleteProduct(index),
                               padding: EdgeInsets.zero,
-                              constraints: BoxConstraints(),
+                              constraints: const BoxConstraints(),
                             ),
                           ],
                         ),
@@ -197,8 +192,8 @@ class _ProductPageState extends State<ProductPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToAddPage,
-        icon: Icon(Icons.add),
-        label: Text("Tambah"),
+        icon: const Icon(Icons.add),
+        label: const Text("Tambah"),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
@@ -209,7 +204,7 @@ class AddEditProductPage extends StatefulWidget {
   final Product? product;
   final bool isEditing;
 
-  AddEditProductPage({this.product, this.isEditing = false});
+  const AddEditProductPage({super.key, this.product, this.isEditing = false});
 
   @override
   _AddEditProductPageState createState() => _AddEditProductPageState();
@@ -265,7 +260,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         title: Text(widget.isEditing ? 'EDIT PRODUK' : 'TAMBAH PRODUK BARU'),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -277,17 +272,17 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(labelText: 'Nama Produk'),
+                decoration: const InputDecoration(labelText: 'Nama Produk'),
                 validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _priceController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'Harga Produk'),
+                decoration: const InputDecoration(labelText: 'Harga Produk'),
                 validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -297,40 +292,40 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: _selectedImage == null
-                      ? Center(child: Icon(Icons.image, size: 40))
+                      ? const Center(child: Icon(Icons.image, size: 40))
                       : Image.file(_selectedImage!, fit: BoxFit.cover),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Jumlah Produk:'),
+                  const Text('Jumlah Produk:'),
                   IconButton(
-                    icon: Icon(Icons.remove),
+                    icon: const Icon(Icons.remove),
                     onPressed: () => setState(() {
                       if (_quantity > 1) _quantity--;
                     }),
                   ),
                   Text(_quantity.toString()),
                   IconButton(
-                    icon: Icon(Icons.add),
+                    icon: const Icon(Icons.add),
                     onPressed: () => setState(() {
                       _quantity++;
                     }),
                   ),
                 ],
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _saveProduct,
-                child: Text('Simpan'),
                 style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
+                child: const Text('Simpan'),
               ),
             ],
           ),

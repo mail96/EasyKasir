@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:easy_kasir/management_product.dart';
+import 'package:easy_kasir/home_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -50,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
       Future.delayed(Duration(seconds: 1), () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProductPage()),
+          MaterialPageRoute(builder: (context) => HomePage()), //ProductPage()),
         );
       });
     } else {

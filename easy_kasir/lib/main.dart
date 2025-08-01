@@ -1,3 +1,4 @@
+import 'package:easy_kasir/home_page.dart';
 import 'package:easy_kasir/login_page.dart';
 import 'package:flutter/material.dart';
 
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const LoginPage(),
+      home: const HomePage(),
     );
   }
 }
