@@ -18,7 +18,7 @@ class _HomePageState extends State<HomePage> {
     (index) => {
       'name': 'Produk ${index + 1}',
       'price': 15000 + (index * 500),
-      'image': 'assets/images/placeholder.png',
+      'image': 'assets/images/gambar1.jpeg',
       'quantity': 0,
     },
   );
