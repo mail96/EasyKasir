@@ -3,6 +3,7 @@ import 'widgets/custom_appbar.dart';
 import 'widgets/custom_drawer.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+import 'transaction_page.dart'; 
 
 String formatRupiah(num number) {
   final formatter = NumberFormat.currency(
@@ -180,9 +181,67 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+//   // Model Transaksi baru---------------------------
+  //   void _showCheckoutPopup() {
+  //     final selectedProducts = sharedProducts
+  //         .where((p) => p['quantity'] > 0)
+  //         .toList();
+
+  //     if (selectedProducts.isEmpty) {
+  //       ScaffoldMessenger.of(
+  //         context,
+  //       ).showSnackBar(SnackBar(content: Text('Tidak ada produk di keranjang')));
+  //       return;
+  //     }
+
+  //     Navigator.push(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (context) => TransactionScreen(cartItems: selectedProducts),
+  //       ),
+  //     ).then((_) {
+  //       // Reset quantities after transaction is complete
+  //       setState(() {
+  //         for (var product in sharedProducts) {
+  //           product['quantity'] = 0;
+  //         }
+  //       });
+  //     });
+  // }
+  // // --------------------Batas code transaksi------------
+
+  // void _onCashierIconPressed() {
+  //   _showCheckoutPopup();
+  // }
+
+  // batas navigasi ke kasir lama
   void _onCashierIconPressed() {
-    _showCheckoutPopup();
+    final selectedProducts = sharedProducts
+        .where((p) => p['quantity'] > 0)
+        .toList();
+
+    if (selectedProducts.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Tidak ada produk di keranjang')));
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TransactionScreen(cartItems: selectedProducts),
+      ),
+    ).then((_) {
+      // Reset quantities after transaction is complete
+      setState(() {
+        for (var product in sharedProducts) {
+          product['quantity'] = 0;
+        }
+      });
+    });
   }
+
 
   void _incrementQuantity(int index) {
     setState(() {

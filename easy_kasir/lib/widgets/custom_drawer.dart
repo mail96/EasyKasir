@@ -3,6 +3,7 @@
 import 'package:easy_kasir/home_page.dart';
 import 'package:easy_kasir/product_page.dart';
 import 'package:flutter/material.dart';
+import '../transaction_page.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({Key? key}) : super(key: key);
@@ -62,6 +63,19 @@ class CustomDrawer extends StatelessWidget {
             },
           ),
           // Tambahkan ListTile lain di sini jika dibutuhkan
+          ListTile(
+            leading: const Icon(Icons.point_of_sale),
+            title: const Text('Transaksi'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TransactionScreen(cartItems: []),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

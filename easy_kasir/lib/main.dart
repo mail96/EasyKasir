@@ -1,5 +1,4 @@
 import 'package:easy_kasir/home_page.dart';
-import 'package:easy_kasir/login_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
