@@ -1,62 +1,142 @@
+// lib/login_page.dart
+
 import 'package:flutter/material.dart';
-import 'package:easy_kasir/home_page.dart';
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'KasirKu',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: LoginPage(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:easy_kasir/home_page.dart'; // Sesuaikan dengan path file HomePage Anda
+import 'package:easy_kasir/register_page.dart'; // Sesuaikan dengan path file RegisterPage Anda
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isLoading = false;
 
-  void _login() {
+  bool _isLoading = false;
+  bool _isPasswordVisible = false;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Email dan password harus diisi')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email dan password harus diisi')),
+      );
       return;
     }
 
-    // Validasi login sementara
-    if (email == 'admin@gmail.com' && password == 'admin123') {
-      setState(() {
-        _isLoading = true;
-      });
+    setState(() {
+      _isLoading = true;
+    });
 
-      // Simulasi proses loading
-      Future.delayed(Duration(seconds: 1), () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()), //ProductPage()),
-        );
-      });
-    } else {
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+
+      // Jika login berhasil, navigasi ke halaman utama
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+        errorMessage = 'Email atau password salah.';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'Format email tidak valid.';
+      } else {
+        errorMessage = 'Terjadi kesalahan: ${e.message}';
+      }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Email atau password salah')));
+      ).showSnackBar(SnackBar(content: Text(errorMessage)));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan tidak terduga: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        await _saveUserToFirestore(user, user.displayName ?? '');
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      if (e.code == 'account-exists-with-different-credential') {
+        errorMessage = 'Akun sudah ada dengan metode login yang berbeda.';
+      } else {
+        errorMessage =
+            'Terjadi kesalahan saat masuk dengan Google: ${e.message}';
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMessage)));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan tidak terduga: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveUserToFirestore(User user, String fullName) async {
+    final DocumentReference userRef = _db.collection('admin').doc(user.uid);
+    final docSnapshot = await userRef.get();
+    if (!docSnapshot.exists) {
+      await userRef.set({
+        'email': user.email ?? '',
+        'nama_lengkap': fullName,
+        'timestamp': FieldValue.serverTimestamp(),
+        'login_method': 'google',
+      });
+      print("Data admin berhasil disimpan di Firestore untuk UID: ${user.uid}");
     }
   }
 
@@ -73,10 +153,9 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Colors.black,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             children: [
-              // Card untuk logo KasirKu
               Card(
                 color: Colors.white10,
                 shape: RoundedRectangleBorder(
@@ -95,8 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-
-              // Card untuk form login
+              const SizedBox(height: 24),
               Card(
                 color: Colors.white10,
                 shape: RoundedRectangleBorder(
@@ -104,65 +182,39 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 elevation: 4,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 500),
+                  constraints: const BoxConstraints(minHeight: 400),
                   child: Padding(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
-                          'Selamat Datang',
+                          'Masuk Akun',
                           style: TextStyle(fontSize: 22, color: Colors.white),
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Bergabunglah dengan kami untuk pengalaman manajemen Kasir yang lebih baik.',
+                          "Masuk untuk melanjutkan ke Kasirku.",
                           style: TextStyle(color: Colors.white54),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
-                        TextField(
+                        _buildTextField(
                           controller: _emailController,
-                          decoration: InputDecoration(
-                            labelText: 'Email',
-                            labelStyle: const TextStyle(color: Colors.white54),
-                            filled: true,
-                            fillColor: Colors.white10,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          style: const TextStyle(color: Colors.white),
+                          label: 'Email',
                           keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 14),
-                        TextField(
+                        _buildTextField(
                           controller: _passwordController,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            labelStyle: const TextStyle(color: Colors.white54),
-                            filled: true,
-                            fillColor: Colors.white10,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            suffixIcon: const Icon(
-                              Icons.visibility_off,
-                              color: Colors.white54,
-                            ),
-                          ),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        const SizedBox(height: 14),
-                        const Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: null,
-                            child: Text(
-                              'Lupa Password?',
-                              style: TextStyle(color: Colors.white54),
-                            ),
-                          ),
+                          label: 'Password',
+                          isPassword: true,
+                          isVisible: _isPasswordVisible,
+                          toggleVisibility: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
                         ),
                         const SizedBox(height: 20),
                         SizedBox(
@@ -201,8 +253,30 @@ class _LoginPageState extends State<LoginPage> {
                             );
                           },
                           child: const Text(
-                            'Belum punya akun? Daftar',
+                            "Belum punya akun? Daftar",
                             style: TextStyle(color: Colors.white54),
+                          ),
+                        ),
+                        const Divider(color: Colors.white24, height: 32),
+                        OutlinedButton.icon(
+                          onPressed: _isLoading ? null : _signInWithGoogle,
+                          icon: const FaIcon(
+                            FontAwesomeIcons.google,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            'Masuk dengan Google',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            side: const BorderSide(color: Colors.white54),
                           ),
                         ),
                       ],
@@ -216,105 +290,36 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-}
 
-class RegisterPage extends StatelessWidget {
-  const RegisterPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('Daftar Akun'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    bool isPassword = false,
+    TextInputType keyboardType = TextInputType.text,
+    bool isVisible = false,
+    VoidCallback? toggleVisibility,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword && !isVisible,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white54),
+        filled: true,
+        fillColor: Colors.white10,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  isVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white54,
+                ),
+                onPressed: toggleVisibility,
+              )
+            : null,
       ),
-      body: Center(
-        child: Card(
-          color: Colors.white10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 4,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Buat Akun Baru',
-                  style: TextStyle(fontSize: 22, color: Colors.white),
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Nama Lengkap',
-                    labelStyle: const TextStyle(color: Colors.white54),
-                    filled: true,
-                    fillColor: Colors.white10,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: const TextStyle(color: Colors.white54),
-                    filled: true,
-                    fillColor: Colors.white10,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: const TextStyle(color: Colors.white54),
-                    filled: true,
-                    fillColor: Colors.white10,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    suffixIcon: const Icon(
-                      Icons.visibility_off,
-                      color: Colors.white54,
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Logika pendaftaran
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: const Text('Daftar', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      style: const TextStyle(color: Colors.white),
     );
   }
 }
-
-// Tambahkan kode MainScreen, Product, dll yang sudah dibuat sebelumnya di sini
