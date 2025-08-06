@@ -1,11 +1,13 @@
+// lib/transaction_page.dart
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file/open_file.dart';
-import 'package:syncfusion_flutter_datepicker/datepicker.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart'; // Import ini ada, tetapi tidak digunakan di fungsi showDateRangePicker
 
 String formatRupiah(num number) {
   final formatter = NumberFormat.currency(
@@ -34,8 +36,12 @@ class Transaction {
   });
 
   factory Transaction.fromMap(Map<String, dynamic> map) {
+    // Asumsi map['dateTime'] adalah Timestamp jika dari Firestore
+    // Contoh ini tidak menggunakan Firestore, jadi .toDate() mungkin error
+    // Jika Anda menggunakan Firestore, pastikan import `cloud_firestore`
     return Transaction(
       id: map['id'],
+      // Ganti dengan map['dateTime'] jika tidak menggunakan Firestore Timestamp
       dateTime: map['dateTime'].toDate(),
       items: List<Map<String, dynamic>>.from(map['items']),
       paymentMethod: map['paymentMethod'],
@@ -138,7 +144,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
         total: _total,
         discount: _discount,
       );
-      
+
       setState(() {
         _transactions.insert(0, newTransaction);
       });
@@ -148,12 +154,12 @@ class _TransactionScreenState extends State<TransactionScreen> {
           content: Text('Pembayaran berhasil: Rp ${_total.toStringAsFixed(0)}'),
         ),
       );
-      
+
       Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -305,7 +311,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
         dateRange: picked,
         isDaily: isDaily,
       );
-      await OpenFile.open(file.path);
+      await OpenFilex.open(file.path); // Sudah benar menggunakan OpenFilex
     }
   }
 
@@ -318,7 +324,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
     }
 
     final file = await _generateTransactionCSV(_transactions);
-    await OpenFile.open(file.path);
+    await OpenFilex.open(file.path); // Sudah benar menggunakan OpenFilex
   }
 
   Widget _buildSalesReport() {
@@ -410,7 +416,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
               var item = _cartItems[index];
               return ListTile(
                 title: Text(item['name']),
-                subtitle: Text('${item['quantity']} x ${formatRupiah(item['price'])}'),
+                subtitle: Text(
+                  '${item['quantity']} x ${formatRupiah(item['price'])}',
+                ),
                 trailing: Text(formatRupiah(item['price'] * item['quantity'])),
               );
             },
@@ -430,7 +438,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Subtotal:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(formatRupiah(_cartItems.fold(0, (sum, item) => sum + (item['price'] * item['quantity'])))),
+              Text(
+                formatRupiah(
+                  _cartItems.fold(
+                    0,
+                    (sum, item) => sum + (item['price'] * item['quantity']),
+                  ),
+                ),
+              ),
             ],
           ),
           SizedBox(height: 8),
@@ -445,20 +460,26 @@ class _TransactionScreenState extends State<TransactionScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              Text(formatRupiah(_total), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(
+                'Total:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              Text(
+                formatRupiah(_total),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
             ],
           ),
           SizedBox(height: 16),
-          Text('Metode Pembayaran', style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            'Metode Pembayaran',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           DropdownButton<String>(
             value: _paymentMethod,
             isExpanded: true,
             items: ['Tunai', 'Kartu Debit', 'QRIS'].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
+              return DropdownMenuItem<String>(value: value, child: Text(value));
             }).toList(),
             onChanged: (newValue) {
               setState(() {
