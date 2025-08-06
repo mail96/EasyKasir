@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "441446128484",
+    "project_id": "easykasir-cc9b8",
+    "storage_bucket": "easykasir-cc9b8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441446128484:android:8a019dd38bb94008aa3871",
+        "android_client_info": {
+          "package_name": "com.example.easy_kasir"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "441446128484-42abolk84d34id01fois2992anfeqmu0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.easy_kasir",
+            "certificate_hash": "6b86f8418d871adf3ea2fc32020ad1525d05c64a"
+          }
+        },
+        {
+          "client_id": "441446128484-09ffcuuqtaorg58ipqtj8cpvh9ctgua8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIpdFn1MKbIwy31K5vRBsQeJQfJbZeF8M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "441446128484-09ffcuuqtaorg58ipqtj8cpvh9ctgua8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "441446128484-7d5obs09k3chiptuib7omcn8kloactmj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.easyKasir"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
