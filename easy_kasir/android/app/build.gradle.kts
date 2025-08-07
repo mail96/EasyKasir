@@ -10,16 +10,16 @@ plugins {
 
 android {
     namespace = "com.example.easy_kasir"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35 // Gunakan versi stabil terbaru
     ndkVersion = "27.0.12077973"
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
@@ -27,8 +27,8 @@ android {
         applicationId = "com.example.easy_kasir"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 23 // MinSdkVersion direkomendasikan untuk Flutter modern
+        targetSdk = 34 // Harus sama dengan compileSdk
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -47,6 +47,6 @@ flutter {
 }
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:32.2.0"))
-    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+    implementation("com.google.firebase:firebase-analytics")
 }
