@@ -3,7 +3,6 @@ import 'widgets/custom_appbar.dart';
 import 'widgets/custom_drawer.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
-import 'transaction_page.dart'; 
 
 String formatRupiah(num number) {
   final formatter = NumberFormat.currency(
@@ -45,12 +44,10 @@ class _HomePageState extends State<HomePage> {
           'image': 'assets/images/gambar1.jpeg',
           'quantity': 0,
           'type': index % 2 == 0 ? 'makanan' : 'minuman',
-          'foodType': index % 2 == 0
-              ? (index % 3 == 0 ? 'ringan' : 'berat')
-              : null,
-          'drinkType': index % 2 != 0
-              ? (index % 3 == 0 ? 'dingin' : 'panas')
-              : null,
+          'foodType':
+              index % 2 == 0 ? (index % 3 == 0 ? 'ringan' : 'berat') : null,
+          'drinkType':
+              index % 2 != 0 ? (index % 3 == 0 ? 'dingin' : 'panas') : null,
         },
       );
     }
@@ -69,9 +66,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showCheckoutPopup() {
-    final selectedProducts = sharedProducts
-        .where((p) => p['quantity'] > 0)
-        .toList();
+    final selectedProducts =
+        sharedProducts.where((p) => p['quantity'] > 0).toList();
     final subtotal = _calculateSubtotal();
     String? selectedPaymentMethod = 'Tunai';
 
@@ -127,7 +123,7 @@ class _HomePageState extends State<HomePage> {
                               'Subtotal',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            Text('Rp ${subtotal.toStringAsFixed(0)}'),
+                            Text(formatRupiah(subtotal)),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -181,78 +177,24 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-//   // Model Transaksi baru---------------------------
-  //   void _showCheckoutPopup() {
-  //     final selectedProducts = sharedProducts
-  //         .where((p) => p['quantity'] > 0)
-  //         .toList();
-
-  //     if (selectedProducts.isEmpty) {
-  //       ScaffoldMessenger.of(
-  //         context,
-  //       ).showSnackBar(SnackBar(content: Text('Tidak ada produk di keranjang')));
-  //       return;
-  //     }
-
-  //     Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => TransactionScreen(cartItems: selectedProducts),
-  //       ),
-  //     ).then((_) {
-  //       // Reset quantities after transaction is complete
-  //       setState(() {
-  //         for (var product in sharedProducts) {
-  //           product['quantity'] = 0;
-  //         }
-  //       });
-  //     });
-  // }
-  // // --------------------Batas code transaksi------------
-
   void _onCashierIconPressed() {
     _showCheckoutPopup();
   }
 
-  // batas navigasi ke kasir lama
-  // void _onCashierIconPressed() {
-  //   final selectedProducts = sharedProducts
-  //       .where((p) => p['quantity'] > 0)
-  //       .toList();
-
-  //   if (selectedProducts.isEmpty) {
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text('Tidak ada produk di keranjang')));
-  //     return;
-  //   }
-
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => TransactionScreen(cartItems: selectedProducts),
-  //     ),
-  //   ).then((_) {
-  //     // Reset quantities after transaction is complete
-  //     setState(() {
-  //       for (var product in sharedProducts) {
-  //         product['quantity'] = 0;
-  //       }
-  //     });
-  //   });
-  // }
-
-
   void _incrementQuantity(int index) {
     setState(() {
-      sharedProducts[index]['quantity']++;
+      final productIndex = sharedProducts.indexOf(_filteredProducts[index]);
+      if (productIndex != -1) {
+        sharedProducts[productIndex]['quantity']++;
+      }
     });
   }
 
   void _decrementQuantity(int index) {
     setState(() {
-      if (sharedProducts[index]['quantity'] > 0) {
-        sharedProducts[index]['quantity']--;
+      final productIndex = sharedProducts.indexOf(_filteredProducts[index]);
+      if (productIndex != -1 && sharedProducts[productIndex]['quantity'] > 0) {
+        sharedProducts[productIndex]['quantity']--;
       }
     });
   }
@@ -262,80 +204,70 @@ class _HomePageState extends State<HomePage> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          FilterChip(
-            label: const Text('Semua'),
-            selected: _selectedProductType == null,
-            onSelected: (_) => setState(() {
-              _selectedProductType = null;
-              _selectedSubType = null;
-            }),
-          ),
-          FilterChip(
-            label: const Text('Makanan'),
-            selected: _selectedProductType == 'makanan',
-            onSelected: (_) => setState(() {
-              _selectedProductType = 'makanan';
-              _selectedSubType = null;
-            }),
-          ),
-          FilterChip(
-            label: const Text('Minuman'),
-            selected: _selectedProductType == 'minuman',
-            onSelected: (_) => setState(() {
-              _selectedProductType = 'minuman';
-              _selectedSubType = null;
-            }),
-          ),
-
+          _buildFilterChip('Semua', null),
+          const SizedBox(width: 8),
+          _buildFilterChip('Makanan', 'makanan'),
+          const SizedBox(width: 8),
+          _buildFilterChip('Minuman', 'minuman'),
           if (_selectedProductType == 'makanan') ...[
             const SizedBox(width: 8),
-            FilterChip(
-              label: const Text('Semua Makanan'),
-              selected: _selectedSubType == null,
-              onSelected: (_) => setState(() => _selectedSubType = null),
-            ),
-            FilterChip(
-              label: const Text('Ringan'),
-              selected: _selectedSubType == 'ringan',
-              onSelected: (_) => setState(() => _selectedSubType = 'ringan'),
-            ),
-            FilterChip(
-              label: const Text('Berat'),
-              selected: _selectedSubType == 'berat',
-              onSelected: (_) => setState(() => _selectedSubType = 'berat'),
-            ),
+            _buildFilterChip('Semua Makanan', 'makanan', subType: null),
+            const SizedBox(width: 8),
+            _buildFilterChip('Ringan', 'makanan', subType: 'ringan'),
+            const SizedBox(width: 8),
+            _buildFilterChip('Berat', 'makanan', subType: 'berat'),
           ],
-
           if (_selectedProductType == 'minuman') ...[
             const SizedBox(width: 8),
-            FilterChip(
-              label: const Text('Semua Minuman'),
-              selected: _selectedSubType == null,
-              onSelected: (_) => setState(() => _selectedSubType = null),
-            ),
-            FilterChip(
-              label: const Text('Dingin'),
-              selected: _selectedSubType == 'dingin',
-              onSelected: (_) => setState(() => _selectedSubType = 'dingin'),
-            ),
-            FilterChip(
-              label: const Text('Panas'),
-              selected: _selectedSubType == 'panas',
-              onSelected: (_) => setState(() => _selectedSubType = 'panas'),
-            ),
+            _buildFilterChip('Semua Minuman', 'minuman', subType: null),
+            const SizedBox(width: 8),
+            _buildFilterChip('Dingin', 'minuman', subType: 'dingin'),
+            const SizedBox(width: 8),
+            _buildFilterChip('Panas', 'minuman', subType: 'panas'),
           ],
         ],
       ),
     );
   }
 
+  Widget _buildFilterChip(String label, String? productType,
+      {String? subType}) {
+    bool isSelected;
+    if (productType == null) {
+      isSelected = _selectedProductType == null;
+    } else if (_selectedProductType != productType) {
+      isSelected = false;
+    } else {
+      isSelected = _selectedSubType == subType;
+    }
+
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => setState(() {
+        _selectedProductType = productType;
+        _selectedSubType = subType;
+      }),
+      selectedColor: Colors.deepPurple.shade100,
+      backgroundColor: Colors.grey.shade200,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.deepPurple : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: isSelected
+            ? BorderSide(color: Colors.deepPurple.shade200, width: 1.5)
+            : BorderSide.none,
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> get _filteredProducts {
     return sharedProducts.where((product) {
-      final matchesType =
-          _selectedProductType == null ||
+      final matchesType = _selectedProductType == null ||
           product['type'] == _selectedProductType;
-      final matchesSubType =
-          _selectedSubType == null ||
+      final matchesSubType = _selectedSubType == null ||
           (product['type'] == 'makanan' &&
               product['foodType'] == _selectedSubType) ||
           (product['type'] == 'minuman' &&
@@ -371,34 +303,25 @@ class _HomePageState extends State<HomePage> {
               sliver: SliverToBoxAdapter(child: _buildSearchBar()),
             ),
             SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: SizedBox(
-                      height: 40,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 16.0,
-                              right: 8.0,
-                            ),
-                            child: InkWell(
-                              onTap: _onCashierIconPressed,
-                              child: const Icon(
-                                Icons.point_of_sale,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ],
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      onTap: _onCashierIconPressed,
+                      child: const Icon(
+                        Icons.point_of_sale,
+                        color: Colors.black,
                       ),
                     ),
-                  ),
-                  _buildTypeFilterChips(),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildTypeFilterChips(),
+                    ),
+                  ],
+                ),
               ),
             ),
             SliverPadding(
@@ -410,12 +333,12 @@ class _HomePageState extends State<HomePage> {
                   mainAxisSpacing: 16.0,
                   childAspectRatio: 0.7,
                 ),
-                delegate: SliverChildBuilderDelegate((
-                  BuildContext context,
-                  int index,
-                ) {
-                  return _buildProductCard(_filteredProducts[index], index);
-                }, childCount: _filteredProducts.length),
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    return _buildProductCard(_filteredProducts[index], index);
+                  },
+                  childCount: _filteredProducts.length,
+                ),
               ),
             ),
           ],
@@ -480,9 +403,10 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Container(
-                  color: Colors.grey.shade200,
-                  child: Center(child: imageWidget),
+                child: ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: imageWidget,
                 ),
               ),
               Padding(
@@ -631,7 +555,7 @@ class _HomePageState extends State<HomePage> {
                           '${product['name']} x${product['quantity']}',
                         ),
                       ),
-                      Text('Rp ${totalItemPrice.toStringAsFixed(0)}'),
+                      Text(formatRupiah(totalItemPrice)),
                     ],
                   ),
                 );
@@ -657,9 +581,8 @@ class _HomePageState extends State<HomePage> {
       ),
       items: <String>['Tunai', 'Kartu Debit', 'QRIS']
           .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
-          })
-          .toList(),
+        return DropdownMenuItem<String>(value: value, child: Text(value));
+      }).toList(),
       onChanged: onChanged,
     );
   }
